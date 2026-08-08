@@ -9,9 +9,9 @@ export interface AuctionCardProps {
   product: Product;
   currentBid: number;
   bidCount: number;
-  isTopBidder?: boolean;
-  onBid?: (product: Product) => void;
-  variant?: "compact" | "full";
+  isTopBidder?: boolean | undefined;
+  onBid?: ((product: Product) => void) | undefined;
+  variant?: "compact" | "full" | undefined;
 }
 
 export function AuctionCard({

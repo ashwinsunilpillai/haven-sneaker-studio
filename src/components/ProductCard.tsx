@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
-  priority?: boolean;
+  priority?: boolean | undefined;
 }
 
 export function ProductCard({ product, priority }: ProductCardProps) {

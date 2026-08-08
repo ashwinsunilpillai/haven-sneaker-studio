@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 
 export interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  error?: string;
-  hint?: string;
+  error?: string | undefined;
+  hint?: string | undefined;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, FieldProps>(

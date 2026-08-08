@@ -4,7 +4,7 @@ interface SizeSelectorProps {
   sizes: number[];
   value: number | null;
   onChange: (size: number) => void;
-  error?: string;
+  error?: string | undefined;
 }
 
 export function SizeSelector({ sizes, value, onChange, error }: SizeSelectorProps) {

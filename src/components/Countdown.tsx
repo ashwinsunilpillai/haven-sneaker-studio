@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 
 interface CountdownProps {
   endsAt: string;
-  className?: string;
-  label?: string;
+  className?: string | undefined;
+  label?: string | undefined;
 }
 
 /** Renders after mount only, so SSR output stays stable. */

@@ -3,8 +3,8 @@ import type { Product } from "@/lib/types";
 
 interface ProductGridProps {
   products: Product[];
-  loading?: boolean;
-  skeletonCount?: number;
+  loading?: boolean | undefined;
+  skeletonCount?: number | undefined;
 }
 
 export function ProductGrid({ products, loading, skeletonCount = 8 }: ProductGridProps) {
