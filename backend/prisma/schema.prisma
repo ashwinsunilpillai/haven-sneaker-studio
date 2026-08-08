@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductCategory {
+  lifestyle
+  basketball
+  running
+  collectible
+}
+
+enum CartStatus {
+  active
+  converted
+  abandoned
+}
+
+enum OrderStatus {
+  pending
+  paid
+  fulfilled
+  cancelled
+  refunded
+}
+
+enum AuctionStatus {
+  scheduled
+  live
+  ended
+  cancelled
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  carts  Cart[]
+  orders Order[]
+  bids   Bid[]
+}
+
+model Product {
+  id           String          @id
+  slug         String          @unique
+  name         String
+  brand        String
+  model        String
+  description  String          @db.Text
+  priceInPaise Int
+  image        String
+  gallery      String[]
+  category     ProductCategory
+  isNew        Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  sizes      ProductSize[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  auction    Auction?
+
+  @@index([brand])
+  @@index([category])
+}
+
+model ProductSize {
+  id        String  @id @default(cuid())
+  productId String
+  value     Decimal @db.Decimal(4, 1)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, value])
+  @@index([value])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?
+  status    CartStatus @default(active)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user  User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items CartItem[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  size      Decimal  @db.Decimal(4, 1)
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([cartId, productId, size])
+  @@index([productId])
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  userId       String?
+  status       OrderStatus @default(pending)
+  subtotal     Int
+  shipping     Int
+  total        Int
+  customerName String?
+  customerEmail String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user  User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id              String  @id @default(cuid())
+  orderId         String
+  productId       String
+  size            Decimal @db.Decimal(4, 1)
+  quantity        Int
+  unitPriceInPaise Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([productId])
+}
+
+model Auction {
+  id                   String        @id @default(cuid())
+  productId            String        @unique
+  status               AuctionStatus @default(live)
+  startingBidInPaise   Int
+  reservePriceInPaise  Int?
+  startsAt             DateTime      @default(now())
+  endsAt               DateTime
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  bids    Bid[]
+
+  @@index([status])
+  @@index([endsAt])
+}
+
+model Bid {
+  id            String   @id @default(cuid())
+  auctionId     String
+  userId        String?
+  amountInPaise Int
+  createdAt     DateTime @default(now())
+
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([auctionId, amountInPaise])
+  @@index([userId])
+}
