@@ -1,24 +1,47 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { SiteLayout } from "@/components/SiteLayout";
+import { AboutSection } from "@/components/home/AboutSection";
+import { FeaturedSneakers } from "@/components/home/FeaturedSneakers";
+import { HeroSection } from "@/components/home/HeroSection";
+import { LiveAuctionsSection } from "@/components/home/LiveAuctionsSection";
+import { getAuctions } from "@/services/auctions";
+import { getFeaturedProducts } from "@/services/products";
+
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Haven — Premium Sneakers & Live Auctions" },
+      {
+        name: "description",
+        content:
+          "Haven is a premium sneaker marketplace. Shop authenticated pairs, discover new silhouettes and bid in live auctions.",
+      },
+      { property: "og:title", content: "Haven — Premium Sneakers & Live Auctions" },
+      {
+        property: "og:description",
+        content: "Find your next pair. Authenticated sneakers and live bidding on exclusive drops.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "/" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: "/" }],
+  }),
+  component: HomePage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function HomePage() {
+  const featured = useQuery({ queryKey: ["products", "featured"], queryFn: () => getFeaturedProducts(20) });
+  const auctions = useQuery({ queryKey: ["auctions"], queryFn: getAuctions });
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <SiteLayout>
+      <HeroSection />
+      <FeaturedSneakers products={featured.data ?? []} loading={featured.isLoading} />
+      <LiveAuctionsSection auctions={auctions.data ?? []} />
+      <AboutSection />
+    </SiteLayout>
   );
 }
