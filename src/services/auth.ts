@@ -27,7 +27,7 @@ export async function login(email: string, password: string): Promise<User> {
   return {
     id: "u-mock-1",
     email,
-    name: email.split("@")[0].replace(/[._-]/g, " ") || "Haven Member",
+    name: (email.split("@")[0] ?? "").replace(/[._-]/g, " ") || "Haven Member",
   };
 }
 
