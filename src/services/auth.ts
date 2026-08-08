@@ -1,41 +1,84 @@
 import type { User } from "@/lib/types";
 
-/** Mock auth. Replace with real API calls (Express + httpOnly cookies) later. */
+const API_BASE_URL = "http://localhost:4000/api";
 
-const STORAGE_KEY = "haven.auth.user";
-const delay = (ms = 600) => new Promise((resolve) => setTimeout(resolve, ms));
-
-export function readStoredUser(): User | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as User) : null;
-  } catch {
-    return null;
-  }
+interface AuthResponse {
+  user: User;
 }
 
-export function persistUser(user: User | null) {
-  if (typeof window === "undefined") return;
-  if (user) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  else window.localStorage.removeItem(STORAGE_KEY);
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers ?? {}),
+    },
+  });
+
+  let data: unknown = null;
+
+  try {
+    data = await response.json();
+  } catch {
+    // Some successful responses may not contain JSON.
+  }
+
+  if (!response.ok) {
+    const message =
+      typeof data === "object" &&
+      data !== null &&
+      "error" in data &&
+      typeof data.error === "string"
+        ? data.error
+        : "Something went wrong.";
+
+    throw new Error(message);
+  }
+
+  return data as T;
 }
 
 export async function login(email: string, password: string): Promise<User> {
-  await delay();
-  if (password.length < 6) throw new Error("Incorrect email or password.");
-  return {
-    id: "u-mock-1",
-    email,
-    name: (email.split("@")[0] ?? "").replace(/[._-]/g, " ") || "Haven Member",
-  };
+  const data = await request<AuthResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+
+  return data.user;
 }
 
-export async function signup(name: string, email: string): Promise<User> {
-  await delay();
-  return { id: "u-mock-1", email, name };
+export async function signup(
+  name: string,
+  email: string,
+  password: string,
+): Promise<User> {
+  const data = await request<AuthResponse>("/auth/signup", {
+    method: "POST",
+    body: JSON.stringify({ name, email, password }),
+  });
+
+  return data.user;
+}
+
+export async function me(): Promise<User | null> {
+  try {
+    const data = await request<AuthResponse>("/auth/me", {
+      method: "GET",
+    });
+
+    return data.user;
+  } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required.") {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 export async function logout(): Promise<void> {
-  await delay(150);
+  await request<{ success: boolean }>("/auth/logout", {
+    method: "POST",
+  });
 }
