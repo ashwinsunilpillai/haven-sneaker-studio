@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatINR } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { searchProductsSync } from "@/services/products";
+import { searchProducts } from "@/services/products";
 
 interface SearchBarProps {
   className?: string | undefined;
@@ -21,9 +21,28 @@ export function SearchBar({ className, autoFocus, onNavigate }: SearchBarProps) 
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Debounced so this can become an API call without changing the UI.
-    const timer = window.setTimeout(() => setResults(searchProductsSync(query)), 140);
-    return () => window.clearTimeout(timer);
+    let cancelled = false;
+    const trimmed = query.trim();
+
+    if (!trimmed) {
+      setResults([]);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      searchProducts(trimmed, 6)
+        .then((products) => {
+          if (!cancelled) setResults(products);
+        })
+        .catch(() => {
+          if (!cancelled) setResults([]);
+        });
+    }, 140);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [query]);
 
   useEffect(() => {

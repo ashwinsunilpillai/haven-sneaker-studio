@@ -1,31 +1,57 @@
-import { products } from "@/data/products";
 import type { Product } from "@/lib/types";
 
-/**
- * Mock product service. Every function is async so the mock data source can be
- * swapped for `fetch("/api/products")` against an Express backend later.
- */
+const API_BASE_URL = "http://localhost:4000/api";
 
-const delay = (ms = 220) => new Promise((resolve) => setTimeout(resolve, ms));
+interface ProductsResponse {
+  products: Product[];
+}
+
+interface ProductResponse {
+  product: Product;
+}
+
+async function request<T>(path: string): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`);
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error("Not found");
+    }
+
+    throw new Error("Could not load products.");
+  }
+
+  return (await response.json()) as T;
+}
 
 export async function getProducts(): Promise<Product[]> {
-  await delay();
-  return products;
+  const data = await request<ProductsResponse>("/products");
+  return data.products;
 }
 
 export async function getFeaturedProducts(limit = 20): Promise<Product[]> {
-  await delay();
+  const products = await getProducts();
   return products.slice(0, limit);
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  await delay();
-  return products.find((product) => product.slug === slug);
+  try {
+    const data = await request<ProductResponse>(`/products/${encodeURIComponent(slug)}`);
+    return data.product;
+  } catch (error) {
+    if (error instanceof Error && error.message === "Not found") {
+      return undefined;
+    }
+
+    throw error;
+  }
 }
 
-export function searchProductsSync(query: string, limit = 6): Product[] {
+export async function searchProducts(query: string, limit = 50): Promise<Product[]> {
   const q = query.trim().toLowerCase();
   if (!q) return [];
+  const products = await getProducts();
+
   return products
     .filter((product) =>
       [product.name, product.brand, product.model, product.category]
@@ -36,14 +62,10 @@ export function searchProductsSync(query: string, limit = 6): Product[] {
     .slice(0, limit);
 }
 
-export async function searchProducts(query: string): Promise<Product[]> {
-  await delay(120);
-  return searchProductsSync(query, 50);
-}
-
 export async function getRelatedProducts(slug: string, limit = 4): Promise<Product[]> {
-  await delay();
+  const products = await getProducts();
   const current = products.find((product) => product.slug === slug);
+
   return products
     .filter((product) => product.slug !== slug && product.category === current?.category)
     .slice(0, limit);
