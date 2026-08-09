@@ -32,16 +32,24 @@ export function ProductDetails({ product, currentBid, bidCount, onBid }: Product
     return true;
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!requireSize()) return;
-    addToCart(product, size as number);
-    toast.success(`${product.name} (UK ${size}) added to cart`);
+    try {
+      await addToCart(product, size as number);
+      toast.success(`${product.name} (UK ${size}) added to cart`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not add to cart.");
+    }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!requireSize()) return;
-    addToCart(product, size as number);
-    navigate({ to: "/checkout" });
+    try {
+      await addToCart(product, size as number);
+      navigate({ to: "/checkout" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not add to cart.");
+    }
   };
 
   return (

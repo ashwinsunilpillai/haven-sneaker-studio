@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/haven-button";
 import { Input } from "@/components/ui/text-field";
 import { useCart } from "@/context/CartContext";
 import { formatINR } from "@/lib/format";
+import { createOrder } from "@/services/orders";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
-      { title: "Checkout — Haven" },
+      { title: "Checkout - Haven" },
       { name: "description", content: "Complete your Haven order with shipping and payment details." },
-      { property: "og:title", content: "Checkout — Haven" },
+      { property: "og:title", content: "Checkout - Haven" },
       { property: "og:description", content: "Secure checkout for authenticated sneakers at Haven." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "/checkout" },
@@ -54,6 +55,7 @@ function CheckoutPage() {
     country: "India",
   });
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
+  const [formError, setFormError] = useState<string>();
   const [paying, setPaying] = useState(false);
 
   const update = (key: FieldKey) => (event: React.ChangeEvent<HTMLInputElement>) =>
@@ -67,15 +69,20 @@ function CheckoutPage() {
     });
     if (values.email && !/^\S+@\S+\.\S+$/.test(values.email)) next.email = "Enter a valid email.";
     setErrors(next);
+    setFormError(undefined);
     if (Object.keys(next).length) return;
 
-    // Mock payment. A Stripe PaymentIntent call slots in here later.
     setPaying(true);
-    await new Promise((resolve) => setTimeout(resolve, 1400));
-    setPaying(false);
-    clearCart();
-    toast.success("Payment confirmed — your order is on the way.");
-    navigate({ to: "/" });
+    try {
+      const result = await createOrder(values);
+      await clearCart();
+      toast.success(`Order ${result.order.id} created - your pair is reserved.`);
+      navigate({ to: "/" });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Could not create order.");
+    } finally {
+      setPaying(false);
+    }
   };
 
   if (lines.length === 0) {
@@ -136,8 +143,13 @@ function CheckoutPage() {
             <Button type="submit" size="lg" block loading={paying}>
               Pay {formatINR(total)}
             </Button>
+            {formError ? (
+              <p role="alert" className="rounded-sm border border-live/40 bg-live/5 px-3 py-2 text-xs font-medium text-live">
+                {formError}
+              </p>
+            ) : null}
             <p className="text-xs text-muted-foreground">
-              This is a prototype checkout — no payment is processed.
+              This creates your Haven order. Payment will be added in a later phase.
             </p>
           </form>
 
@@ -157,7 +169,7 @@ function CheckoutPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{line.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      UK {line.size} · Qty {line.quantity}
+                      UK {line.size} - Qty {line.quantity}
                     </p>
                   </div>
                   <p className="text-sm font-semibold">{formatINR(line.price * line.quantity)}</p>
