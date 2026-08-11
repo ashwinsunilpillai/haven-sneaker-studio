@@ -16,6 +16,9 @@ export interface Product {
   isAuction?: boolean;
   currentBid?: number;
   bidCount?: number;
+  auctionStatus?: "scheduled" | "live" | "ended" | "cancelled";
+  auctionId?: string;
+  auctionStartsAt?: string;
   /** ISO string — replaced by server time when a backend is connected. */
   auctionEndsAt?: string;
 }

@@ -2,6 +2,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "baseUrl": "..",
+    "ignoreDeprecations": "6.0",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "types": ["node"],
@@ -11,5 +12,10 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts", "prisma/**/*.ts", "../src/data/products.ts", "../src/lib/types.ts"]
+  "include": [
+    "src/**/*.ts",
+    "prisma/**/*.ts",
+    "../src/data/products.ts",
+    "../src/lib/types.ts"
+  ]
 }

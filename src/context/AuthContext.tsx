@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import type { User } from "@/lib/types";
@@ -59,13 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(next);
   }, []);
 
-  const signup = useCallback(
-    async (name: string, email: string, password: string) => {
-      const next = await authService.signup(name, email, password);
-      setUser(next);
-    },
-    [],
-  );
+  const signup = useCallback(async (name: string, email: string, password: string) => {
+    const next = await authService.signup(name, email, password);
+    setUser(next);
+  }, []);
 
   const logout = useCallback(async () => {
     await authService.logout();

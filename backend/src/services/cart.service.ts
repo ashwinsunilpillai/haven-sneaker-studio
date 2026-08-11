@@ -44,10 +44,7 @@ export async function getCartForUser(userId: string) {
   return serializeCart(cart);
 }
 
-export async function addCartItem(
-  userId: string,
-  input: z.infer<typeof addCartItemSchema>,
-) {
+export async function addCartItem(userId: string, input: z.infer<typeof addCartItemSchema>) {
   const cart = await getOrCreateActiveCart(userId);
   await assertValidProductSize(input.productId, input.size);
 

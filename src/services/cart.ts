@@ -39,10 +39,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     const message =
-      typeof data === "object" &&
-      data !== null &&
-      "error" in data &&
-      typeof data.error === "string"
+      typeof data === "object" && data !== null && "error" in data && typeof data.error === "string"
         ? data.error
         : "Something went wrong.";
 

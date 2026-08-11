@@ -1,5 +1,6 @@
 import type { Auction, Bid, Product, ProductSize } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
+import { syncAuctionLifecycle } from "./auction.service.js";
 
 type ProductWithRelations = Product & {
   sizes: ProductSize[];
@@ -29,6 +30,8 @@ const productInclude = {
 };
 
 export async function listProducts() {
+  await syncAuctionLifecycle();
+
   const products = await prisma.product.findMany({
     include: productInclude,
     orderBy: { createdAt: "asc" },
@@ -38,6 +41,8 @@ export async function listProducts() {
 }
 
 export async function findProductBySlug(slug: string) {
+  await syncAuctionLifecycle();
+
   const product = await prisma.product.findUnique({
     where: { slug },
     include: productInclude,
@@ -67,6 +72,9 @@ function serializeProduct(product: ProductWithRelations) {
     isAuction: Boolean(product.auction),
     currentBid: auctionBid ? auctionBid / 100 : undefined,
     bidCount: product.auction?._count.bids ?? undefined,
+    auctionStatus: product.auction?.status,
+    auctionId: product.auction?.id,
+    auctionStartsAt: product.auction?.startsAt.toISOString(),
     auctionEndsAt: product.auction?.endsAt.toISOString(),
   };
 }

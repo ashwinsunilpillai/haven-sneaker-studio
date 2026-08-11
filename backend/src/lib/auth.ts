@@ -27,8 +27,9 @@ export function getAuthCookieOptions(): CookieOptions {
 }
 
 export function signAuthToken(payload: AuthTokenPayload) {
-  const expiresIn = (process.env["JWT_EXPIRES_IN"] ??
-    DEFAULT_JWT_EXPIRES_IN) as NonNullable<SignOptions["expiresIn"]>;
+  const expiresIn = (process.env["JWT_EXPIRES_IN"] ?? DEFAULT_JWT_EXPIRES_IN) as NonNullable<
+    SignOptions["expiresIn"]
+  >;
   const secret: Secret = getJwtSecret();
 
   return jwt.sign({}, secret, {

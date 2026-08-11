@@ -87,7 +87,11 @@ export function ProductDetails({ product, currentBid, bidCount, onBid }: Product
                 <div className="text-right">
                   <dt className="eyebrow text-muted-foreground">Time left</dt>
                   <dd className="display mt-1 text-3xl">
-                    {product.auctionEndsAt ? <Countdown endsAt={product.auctionEndsAt} /> : "--:--:--"}
+                    {product.auctionEndsAt ? (
+                      <Countdown endsAt={product.auctionEndsAt} />
+                    ) : (
+                      "--:--:--"
+                    )}
                   </dd>
                 </div>
               </dl>

@@ -11,7 +11,10 @@ export const Route = createFileRoute("/login")({
       { title: "Log in — Haven" },
       { name: "description", content: "Log in to your Haven account to shop and bid on sneakers." },
       { property: "og:title", content: "Log in — Haven" },
-      { property: "og:description", content: "Access your Haven account, cart and live auction bids." },
+      {
+        property: "og:description",
+        content: "Access your Haven account, cart and live auction bids.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "/login" },
     ],
@@ -79,7 +82,10 @@ function LoginPage() {
               error={errors.password}
             />
             {errors.form ? (
-              <p role="alert" className="rounded-sm border border-live/40 bg-live/5 px-3 py-2 text-xs font-medium text-live">
+              <p
+                role="alert"
+                className="rounded-sm border border-live/40 bg-live/5 px-3 py-2 text-xs font-medium text-live"
+              >
                 {errors.form}
               </p>
             ) : null}
@@ -90,7 +96,10 @@ function LoginPage() {
 
           <p className="mt-8 text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link to="/signup" className="font-semibold text-foreground underline underline-offset-4">
+            <Link
+              to="/signup"
+              className="font-semibold text-foreground underline underline-offset-4"
+            >
               Sign up
             </Link>
           </p>

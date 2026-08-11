@@ -12,8 +12,7 @@ import type { Product } from "@/lib/types";
 /** Auction end times are mocked relative to page load.
  * The real backend will eventually provide absolute timestamps.
  */
-const inMinutes = (minutes: number) =>
-  new Date(Date.now() + minutes * 60_000).toISOString();
+const inMinutes = (minutes: number) => new Date(Date.now() + minutes * 60_000).toISOString();
 
 const CORE_SIZES = [7, 8, 9, 10, 11, 12];
 
@@ -243,8 +242,7 @@ export const products: Product[] = [
     name: "Kyrie 2 Infereno",
     brand: "Nike",
     model: "Kyrie 2",
-    description:
-      "Sharper traction and a locked-in midfoot for the tightest handles in the league.",
+    description: "Sharper traction and a locked-in midfoot for the tightest handles in the league.",
     price: 13499,
     image: "/images/kyrie 2.webp",
     sizes: CORE_SIZES,

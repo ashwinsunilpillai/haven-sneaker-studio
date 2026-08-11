@@ -1,12 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AuctionGrid } from "@/components/AuctionGrid";
 import { BidPanel } from "@/components/BidPanel";
 import { SiteLayout } from "@/components/SiteLayout";
 import type { Product } from "@/lib/types";
-import { getAuctions } from "@/services/auctions";
+import {
+  connectAuctionSocket,
+  getAuctions,
+  joinAuctionRoom,
+  leaveAuctionRoom,
+} from "@/services/auctions";
 
 export const Route = createFileRoute("/auction")({
   head: () => ({
@@ -23,7 +28,16 @@ export const Route = createFileRoute("/auction")({
   component: AuctionPage,
 });
 
-type BidState = Record<string, { currentBid: number; bidCount: number; isTopBidder?: boolean }>;
+type BidState = Record<
+  string,
+  {
+    currentBid: number;
+    bidCount: number;
+    isTopBidder?: boolean;
+    auctionStatus?: Product["auctionStatus"];
+    auctionEndsAt?: string;
+  }
+>;
 
 function AuctionPage() {
   const { data, isLoading } = useQuery({ queryKey: ["auctions"], queryFn: getAuctions });
@@ -31,8 +45,36 @@ function AuctionPage() {
   const [bids, setBids] = useState<BidState>({});
   const [active, setActive] = useState<Product | null>(null);
 
-  const auctions = data ?? [];
+  const auctions = useMemo(() => data ?? [], [data]);
   const activeBid = active ? (bids[active.id]?.currentBid ?? active.currentBid ?? 0) : 0;
+
+  useEffect(() => {
+    const unsubscribe = connectAuctionSocket((payload) => {
+      setBids((prev) => ({
+        ...prev,
+        [payload.productId]: {
+          ...(prev[payload.productId] ?? {}),
+          currentBid: payload.currentBid,
+          bidCount: payload.bidCount,
+          auctionStatus: payload.auctionStatus,
+          auctionEndsAt: payload.auctionEndsAt,
+        },
+      }));
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    if (!auctions.length) return;
+
+    const auctionIds = auctions.map((auction) => auction.auctionId ?? auction.id);
+    auctionIds.forEach((auctionId) => joinAuctionRoom(auctionId));
+
+    return () => {
+      auctionIds.forEach((auctionId) => leaveAuctionRoom(auctionId));
+    };
+  }, [auctions]);
 
   return (
     <SiteLayout>
@@ -65,7 +107,10 @@ function AuctionPage() {
         open={Boolean(active)}
         onOpenChange={(open) => !open && setActive(null)}
         onBidPlaced={(productId, amount, bidCount) =>
-          setBids((prev) => ({ ...prev, [productId]: { currentBid: amount, bidCount, isTopBidder: true } }))
+          setBids((prev) => ({
+            ...prev,
+            [productId]: { currentBid: amount, bidCount, isTopBidder: true },
+          }))
         }
       />
     </SiteLayout>

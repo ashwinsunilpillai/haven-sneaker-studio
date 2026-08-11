@@ -26,10 +26,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     const message =
-      typeof data === "object" &&
-      data !== null &&
-      "error" in data &&
-      typeof data.error === "string"
+      typeof data === "object" && data !== null && "error" in data && typeof data.error === "string"
         ? data.error
         : "Something went wrong.";
 
@@ -48,11 +45,7 @@ export async function login(email: string, password: string): Promise<User> {
   return data.user;
 }
 
-export async function signup(
-  name: string,
-  email: string,
-  password: string,
-): Promise<User> {
+export async function signup(name: string, email: string, password: string): Promise<User> {
   const data = await request<AuthResponse>("/auth/signup", {
     method: "POST",
     body: JSON.stringify({ name, email, password }),

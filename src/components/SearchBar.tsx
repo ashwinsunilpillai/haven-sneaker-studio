@@ -96,9 +96,7 @@ export function SearchBar({ className, autoFocus, onNavigate }: SearchBarProps) 
       {open && query.trim() ? (
         <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-sm border border-border bg-popover shadow-[var(--shadow-lift)]">
           {results.length === 0 ? (
-            <p className="px-4 py-5 text-sm text-muted-foreground">
-              No matches for “{query}”.
-            </p>
+            <p className="px-4 py-5 text-sm text-muted-foreground">No matches for “{query}”.</p>
           ) : (
             <ul className="max-h-96 overflow-auto py-1">
               {results.map((product) => (
@@ -121,7 +119,9 @@ export function SearchBar({ className, autoFocus, onNavigate }: SearchBarProps) 
                       <span className="block text-xs text-muted-foreground">{product.brand}</span>
                     </span>
                     <span className="shrink-0 text-sm font-semibold">
-                      {formatINR(product.isAuction ? (product.currentBid ?? product.price) : product.price)}
+                      {formatINR(
+                        product.isAuction ? (product.currentBid ?? product.price) : product.price,
+                      )}
                     </span>
                   </button>
                 </li>

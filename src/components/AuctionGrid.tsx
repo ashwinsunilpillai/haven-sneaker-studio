@@ -3,7 +3,8 @@ import { AuctionCard } from "@/components/AuctionCard";
 
 interface AuctionGridProps {
   products: Product[];
-  bids?: Record<string, { currentBid: number; bidCount: number; isTopBidder?: boolean }> | undefined;
+  bids?:
+    Record<string, { currentBid: number; bidCount: number; isTopBidder?: boolean }> | undefined;
   onBid?: ((product: Product) => void) | undefined;
   variant?: "compact" | "full" | undefined;
 }

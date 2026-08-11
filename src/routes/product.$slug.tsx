@@ -1,11 +1,12 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { BidPanel } from "@/components/BidPanel";
 import { ProductDetails } from "@/components/ProductDetails";
 import { ProductGrid } from "@/components/ProductGrid";
 import { SiteLayout } from "@/components/SiteLayout";
+import { connectAuctionSocket, joinAuctionRoom, leaveAuctionRoom } from "@/services/auctions";
 import { getProductBySlug, getRelatedProducts } from "@/services/products";
 
 export const Route = createFileRoute("/product/$slug")({
@@ -16,7 +17,9 @@ export const Route = createFileRoute("/product/$slug")({
   },
   head: ({ loaderData, params }) => {
     if (!loaderData) {
-      return { meta: [{ title: "Sneaker not found — Haven" }, { name: "robots", content: "noindex" }] };
+      return {
+        meta: [{ title: "Sneaker not found — Haven" }, { name: "robots", content: "noindex" }],
+      };
     }
     const { product } = loaderData;
     const title = `${product.name} — Haven`;
@@ -48,6 +51,23 @@ function ProductPage() {
     bidCount: product.bidCount ?? 0,
   });
   const [bidOpen, setBidOpen] = useState(false);
+
+  useEffect(() => {
+    if (!product.isAuction) return;
+
+    const auctionId = product.auctionId ?? product.id;
+    const unsubscribe = connectAuctionSocket((payload) => {
+      if (payload.productId !== product.id) return;
+      setBid({ currentBid: payload.currentBid, bidCount: payload.bidCount });
+    });
+
+    joinAuctionRoom(auctionId);
+
+    return () => {
+      leaveAuctionRoom(auctionId);
+      unsubscribe();
+    };
+  }, [product.auctionId, product.id, product.isAuction]);
 
   return (
     <SiteLayout>

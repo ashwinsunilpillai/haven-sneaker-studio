@@ -65,7 +65,9 @@ export function Navbar() {
             <DropdownMenuContent align="end" className="w-52 rounded-sm">
               {isAuthenticated ? (
                 <>
-                  <DropdownMenuLabel className="truncate capitalize">{user?.name}</DropdownMenuLabel>
+                  <DropdownMenuLabel className="truncate capitalize">
+                    {user?.name}
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/cart">Cart</Link>
@@ -97,7 +99,11 @@ export function Navbar() {
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             className="inline-flex size-10 items-center justify-center rounded-sm transition-colors hover:bg-secondary md:hidden"
           >
-            {mobileOpen ? <Menu className="size-5" aria-hidden="true" /> : <Menu className="size-5" aria-hidden="true" />}
+            {mobileOpen ? (
+              <Menu className="size-5" aria-hidden="true" />
+            ) : (
+              <Menu className="size-5" aria-hidden="true" />
+            )}
           </button>
         </nav>
       </div>
@@ -107,7 +113,10 @@ export function Navbar() {
       </div>
 
       {mobileOpen ? (
-        <div id="haven-mobile-menu" className="border-t border-border bg-background px-5 py-4 md:hidden">
+        <div
+          id="haven-mobile-menu"
+          className="border-t border-border bg-background px-5 py-4 md:hidden"
+        >
           <div className="flex items-center justify-between pb-3">
             <span className="eyebrow text-muted-foreground">Menu</span>
             <button
@@ -126,7 +135,11 @@ export function Navbar() {
               </Link>
             </li>
             <li>
-              <Link to="/auction" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-3">
+              <Link
+                to="/auction"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 py-3"
+              >
                 <span className="size-1.5 animate-pulse rounded-full bg-live" aria-hidden="true" />
                 Live Auctions
               </Link>

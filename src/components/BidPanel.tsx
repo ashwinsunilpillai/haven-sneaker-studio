@@ -48,7 +48,7 @@ export function BidPanel({ product, currentBid, open, onOpenChange, onBidPlaced 
     setSubmitting(true);
     setError(undefined);
     try {
-      const result = await placeBid(product.id, value);
+      const result = await placeBid(product.auctionId ?? product.id, value);
       onBidPlaced(product.id, result.currentBid, result.bidCount);
       onOpenChange(false);
     } catch (err) {

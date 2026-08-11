@@ -25,7 +25,10 @@ export function HeroSection() {
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
           <Button size="lg" variant="live" asChild className="sm:min-w-56">
             <Link to="/auction">
-              <span className="mr-1 inline-block size-2 animate-pulse rounded-full bg-current" aria-hidden="true" />
+              <span
+                className="mr-1 inline-block size-2 animate-pulse rounded-full bg-current"
+                aria-hidden="true"
+              />
               Live Auctions
             </Link>
           </Button>

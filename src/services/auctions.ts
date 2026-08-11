@@ -1,22 +1,68 @@
-import { products } from "@/data/products";
+import { socket } from "@/lib/socket";
 import type { Product } from "@/lib/types";
 
-/**
- * Mock auction service.
- *
- * A real implementation will subscribe to a Socket.IO channel and push updates
- * into the same shapes returned here, so the UI layer will not need to change.
- */
+const API_BASE_URL = "http://localhost:4000/api";
 
-const delay = (ms = 220) => new Promise((resolve) => setTimeout(resolve, ms));
+export interface AuctionRealtimeState {
+  auctionId: string;
+  productId: string;
+  currentBid: number;
+  bidCount: number;
+  auctionStatus: Product["auctionStatus"];
+  auctionStartsAt: string;
+  auctionEndsAt: string;
+  updatedAt: string;
+}
+
+export interface PlaceBidResult {
+  auctionId: string;
+  productId: string;
+  currentBid: number;
+  bidCount: number;
+  status?: string;
+}
+
+interface AuctionsResponse {
+  auctions: Product[];
+}
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers ?? {}),
+    },
+  });
+
+  let data: unknown = null;
+
+  try {
+    data = await response.json();
+  } catch {
+    // Some successful responses may not contain JSON.
+  }
+
+  if (!response.ok) {
+    const message =
+      typeof data === "object" && data !== null && "error" in data && typeof data.error === "string"
+        ? data.error
+        : "Something went wrong.";
+
+    throw new Error(message);
+  }
+
+  return data as T;
+}
 
 export async function getAuctions(): Promise<Product[]> {
-  await delay();
-  return products.filter((product) => product.isAuction);
+  const data = await request<AuctionsResponse>("/auctions");
+  return data.auctions;
 }
 
 export function getAuctionsSync(): Product[] {
-  return products.filter((product) => product.isAuction);
+  return [];
 }
 
 export function minimumNextBid(currentBid: number): number {
@@ -24,18 +70,39 @@ export function minimumNextBid(currentBid: number): number {
   return currentBid + increment;
 }
 
-export interface PlaceBidResult {
-  productId: string;
-  currentBid: number;
-  bidCount: number;
+export async function placeBid(auctionId: string, amount: number): Promise<PlaceBidResult> {
+  return request<PlaceBidResult>(`/auctions/${encodeURIComponent(auctionId)}/bids`, {
+    method: "POST",
+    body: JSON.stringify({ amount }),
+  });
 }
 
-export async function placeBid(productId: string, amount: number): Promise<PlaceBidResult> {
-  await delay(400);
-  const product = products.find((item) => item.id === productId);
-  if (!product) throw new Error("Auction not found");
-  if (amount < minimumNextBid(product.currentBid ?? 0)) {
-    throw new Error("Bid is below the minimum increment");
+export function connectAuctionSocket(onState: (state: AuctionRealtimeState) => void) {
+  if (!socket.connected) {
+    socket.connect();
   }
-  return { productId, currentBid: amount, bidCount: (product.bidCount ?? 0) + 1 };
+
+  const handleState = (payload: AuctionRealtimeState) => onState(payload);
+
+  socket.on("auction:state", handleState);
+  socket.on("bid:placed", handleState);
+  socket.on("auction:started", handleState);
+  socket.on("auction:ended", handleState);
+
+  return () => {
+    socket.off("auction:state", handleState);
+    socket.off("bid:placed", handleState);
+    socket.off("auction:started", handleState);
+    socket.off("auction:ended", handleState);
+  };
+}
+
+export function joinAuctionRoom(auctionId: string) {
+  if (!auctionId) return;
+  socket.emit("auction:join", { auctionId });
+}
+
+export function leaveAuctionRoom(auctionId: string) {
+  if (!auctionId) return;
+  socket.emit("auction:leave", { auctionId });
 }

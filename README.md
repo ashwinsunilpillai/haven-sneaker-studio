@@ -80,11 +80,11 @@ Create a persistent responsive navbar.
 
 Desktop navbar:
 
--------------------------------------------------------------------------------
+---
 
-HAVEN       Search sneakers...        Live Auctions          Cart            Account
+HAVEN Search sneakers... Live Auctions Cart Account
 
--------------------------------------------------------------------------------
+---
 
 Left:
 
@@ -210,11 +210,11 @@ The homepage is the most important page.
 
 Structure it as:
 
---------------------------------------------------
+---
 
 NAVBAR
 
---------------------------------------------------
+---
 
 HERO SECTION
 
@@ -240,11 +240,11 @@ The Live Auctions CTA should be visually prominent because live bidding is an im
 
 The hero should feel premium and editorial rather than like a basic ecommerce banner.
 
---------------------------------------------------
+---
 
 FEATURED SNEAKERS
 
---------------------------------------------------
+---
 
 Section title:
 
@@ -284,11 +284,11 @@ Do NOT manually hard-code 20 separate cards.
 
 Create a reusable ProductCard component and render the cards from a product data array.
 
---------------------------------------------------
+---
 
 LIVE AUCTIONS SECTION
 
---------------------------------------------------
+---
 
 This should be one of the most prominent sections on the homepage.
 
@@ -338,11 +338,11 @@ The countdown can be simulated using mock data.
 
 The frontend should be structured so that this can later be replaced with real-time Socket.IO data.
 
---------------------------------------------------
+---
 
 ABOUT HAVEN
 
---------------------------------------------------
+---
 
 At the bottom of the homepage create an About Haven section.
 
@@ -358,11 +358,11 @@ Example tone:
 
 Keep it concise.
 
---------------------------------------------------
+---
 
 FOOTER
 
---------------------------------------------------
+---
 
 Create a clean footer containing:
 
@@ -598,7 +598,7 @@ Each auction card should contain:
 
 Example:
 
---------------------------------------------------
+---
 
 Jordan 11 Retro
 
@@ -614,7 +614,7 @@ Time Remaining
 
 [ BID HIGHER ]
 
---------------------------------------------------
+---
 
 Clicking an auction should open the corresponding product page or auction detail interface.
 

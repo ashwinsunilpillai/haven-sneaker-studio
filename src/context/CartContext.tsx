@@ -80,62 +80,71 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (hydrated && !isAuthenticated) persistCart(lines);
   }, [lines, hydrated, isAuthenticated]);
 
-  const addToCart = useCallback(async (product: Product, size: number, quantity = 1) => {
-    if (isAuthenticated) {
-      applySnapshot(await addCartItem(product.id, size, quantity));
-      return;
-    }
-
-    setLines((prev) => {
-      const id = `${product.id}-${size}`;
-      const existing = prev.find((line) => line.id === id);
-      if (existing) {
-        return prev.map((line) =>
-          line.id === id ? { ...line, quantity: line.quantity + quantity } : line,
-        );
+  const addToCart = useCallback(
+    async (product: Product, size: number, quantity = 1) => {
+      if (isAuthenticated) {
+        applySnapshot(await addCartItem(product.id, size, quantity));
+        return;
       }
-      return [
-        ...prev,
-        {
-          id,
-          productId: product.id,
-          slug: product.slug,
-          name: product.name,
-          brand: product.brand,
-          image: product.image,
-          price: product.price,
-          size,
-          quantity,
-        },
-      ];
-    });
-  }, [applySnapshot, isAuthenticated]);
 
-  const removeLine = useCallback(async (id: string) => {
-    if (isAuthenticated) {
-      applySnapshot(await removeCartItem(id));
-      return;
-    }
+      setLines((prev) => {
+        const id = `${product.id}-${size}`;
+        const existing = prev.find((line) => line.id === id);
+        if (existing) {
+          return prev.map((line) =>
+            line.id === id ? { ...line, quantity: line.quantity + quantity } : line,
+          );
+        }
+        return [
+          ...prev,
+          {
+            id,
+            productId: product.id,
+            slug: product.slug,
+            name: product.name,
+            brand: product.brand,
+            image: product.image,
+            price: product.price,
+            size,
+            quantity,
+          },
+        ];
+      });
+    },
+    [applySnapshot, isAuthenticated],
+  );
 
-    setLines((prev) => prev.filter((line) => line.id !== id));
-  }, [applySnapshot, isAuthenticated]);
-
-  const setQuantity = useCallback(async (id: string, quantity: number) => {
-    if (isAuthenticated) {
-      if (quantity <= 0) {
+  const removeLine = useCallback(
+    async (id: string) => {
+      if (isAuthenticated) {
         applySnapshot(await removeCartItem(id));
-      } else {
-        applySnapshot(await updateCartItem(id, quantity));
+        return;
       }
-      return;
-    }
 
-    setLines((prev) =>
-      prev.flatMap((line) =>
-        line.id === id ? (quantity <= 0 ? [] : [{ ...line, quantity }]) : [line],
-      ),
-    );
-  }, [applySnapshot, isAuthenticated]);
+      setLines((prev) => prev.filter((line) => line.id !== id));
+    },
+    [applySnapshot, isAuthenticated],
+  );
+
+  const setQuantity = useCallback(
+    async (id: string, quantity: number) => {
+      if (isAuthenticated) {
+        if (quantity <= 0) {
+          applySnapshot(await removeCartItem(id));
+        } else {
+          applySnapshot(await updateCartItem(id, quantity));
+        }
+        return;
+      }
+
+      setLines((prev) =>
+        prev.flatMap((line) =>
+          line.id === id ? (quantity <= 0 ? [] : [{ ...line, quantity }]) : [line],
+        ),
+      );
+    },
+    [applySnapshot, isAuthenticated],
+  );
 
   const clearCart = useCallback(async () => {
     if (isAuthenticated) {

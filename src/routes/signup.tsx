@@ -9,9 +9,15 @@ export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
       { title: "Create an account — Haven" },
-      { name: "description", content: "Create a Haven account to shop authenticated sneakers and join live auctions." },
+      {
+        name: "description",
+        content: "Create a Haven account to shop authenticated sneakers and join live auctions.",
+      },
       { property: "og:title", content: "Create an account — Haven" },
-      { property: "og:description", content: "Join Haven for curated sneaker drops and live bidding." },
+      {
+        property: "og:description",
+        content: "Join Haven for curated sneaker drops and live bidding.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "/signup" },
     ],
@@ -108,7 +114,10 @@ function SignupPage() {
               error={errors.confirm}
             />
             {errors.form ? (
-              <p role="alert" className="rounded-sm border border-live/40 bg-live/5 px-3 py-2 text-xs font-medium text-live">
+              <p
+                role="alert"
+                className="rounded-sm border border-live/40 bg-live/5 px-3 py-2 text-xs font-medium text-live"
+              >
                 {errors.form}
               </p>
             ) : null}
@@ -119,7 +128,10 @@ function SignupPage() {
 
           <p className="mt-8 text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link to="/login" className="font-semibold text-foreground underline underline-offset-4">
+            <Link
+              to="/login"
+              className="font-semibold text-foreground underline underline-offset-4"
+            >
               Log in
             </Link>
           </p>

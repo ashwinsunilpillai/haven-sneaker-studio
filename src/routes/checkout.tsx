@@ -13,9 +13,15 @@ export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
       { title: "Checkout - Haven" },
-      { name: "description", content: "Complete your Haven order with shipping and payment details." },
+      {
+        name: "description",
+        content: "Complete your Haven order with shipping and payment details.",
+      },
       { property: "og:title", content: "Checkout - Haven" },
-      { property: "og:description", content: "Secure checkout for authenticated sneakers at Haven." },
+      {
+        property: "og:description",
+        content: "Secure checkout for authenticated sneakers at Haven.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "/checkout" },
       { name: "robots", content: "noindex" },
@@ -144,7 +150,10 @@ function CheckoutPage() {
               Pay {formatINR(total)}
             </Button>
             {formError ? (
-              <p role="alert" className="rounded-sm border border-live/40 bg-live/5 px-3 py-2 text-xs font-medium text-live">
+              <p
+                role="alert"
+                className="rounded-sm border border-live/40 bg-live/5 px-3 py-2 text-xs font-medium text-live"
+              >
                 {formError}
               </p>
             ) : null}

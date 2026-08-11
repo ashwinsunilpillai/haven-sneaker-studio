@@ -14,7 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { Toaster } from "@/components/ui/sonner";
-
+import { socket } from "@/lib/socket";
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -83,7 +83,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Haven — Premium Sneakers & Live Auctions" },
       {
         name: "description",
-        content: "Haven is a premium sneaker marketplace for authenticated pairs and live auctions.",
+        content:
+          "Haven is a premium sneaker marketplace for authenticated pairs and live auctions.",
       },
       { property: "og:site_name", content: "Haven" },
       { property: "og:type", content: "website" },
@@ -122,6 +123,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    socket.connect();
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

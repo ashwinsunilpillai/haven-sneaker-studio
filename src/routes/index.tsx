@@ -33,7 +33,10 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const featured = useQuery({ queryKey: ["products", "featured"], queryFn: () => getFeaturedProducts(20) });
+  const featured = useQuery({
+    queryKey: ["products", "featured"],
+    queryFn: () => getFeaturedProducts(20),
+  });
   const auctions = useQuery({ queryKey: ["auctions"], queryFn: getAuctions });
 
   return (

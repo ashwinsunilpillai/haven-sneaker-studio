@@ -88,12 +88,7 @@ function invalidCredentialsError() {
   return new AuthServiceError(401, "Invalid email or password.");
 }
 
-function serializeUser(user: {
-  id: string;
-  name: string;
-  email: string;
-  createdAt: Date;
-}) {
+function serializeUser(user: { id: string; name: string; email: string; createdAt: Date }) {
   return {
     id: user.id,
     name: user.name,
