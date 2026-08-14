@@ -25,6 +25,7 @@ interface CartContextValue {
   removeLine: (id: string) => Promise<void>;
   setQuantity: (id: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
+  refreshCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -155,6 +156,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLines([]);
   }, [applySnapshot, isAuthenticated]);
 
+  const refreshCart = useCallback(async () => {
+    if (!isAuthenticated) return;
+
+    try {
+      applySnapshot(await getCart());
+    } catch {
+      applySnapshot(createCartSnapshot([]));
+    }
+  }, [applySnapshot, isAuthenticated]);
+
   const value = useMemo<CartContextValue>(() => {
     const localSnapshot = createCartSnapshot(lines);
     const subtotal = serverTotals?.subtotal ?? localSnapshot.subtotal;
@@ -172,8 +183,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeLine,
       setQuantity,
       clearCart,
+      refreshCart,
     };
-  }, [lines, serverTotals, addToCart, removeLine, setQuantity, clearCart]);
+  }, [lines, serverTotals, addToCart, removeLine, setQuantity, clearCart, refreshCart]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

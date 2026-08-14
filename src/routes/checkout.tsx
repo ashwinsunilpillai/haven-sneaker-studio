@@ -1,13 +1,12 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { toast } from "sonner";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import { SiteLayout } from "@/components/SiteLayout";
 import { Button } from "@/components/ui/haven-button";
 import { Input } from "@/components/ui/text-field";
 import { useCart } from "@/context/CartContext";
 import { formatINR } from "@/lib/format";
-import { createOrder } from "@/services/orders";
+import { createStripeCheckoutSession, syncStripeCheckoutSession } from "@/services/payments";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -48,8 +47,7 @@ const ADDRESS_FIELDS = [
 type FieldKey = (typeof FIELDS)[number]["key"] | (typeof ADDRESS_FIELDS)[number]["key"];
 
 function CheckoutPage() {
-  const { lines, subtotal, shipping, total, clearCart } = useCart();
-  const navigate = useNavigate();
+  const { lines, subtotal, shipping, total, refreshCart } = useCart();
   const [values, setValues] = useState<Record<FieldKey, string>>({
     name: "",
     email: "",
@@ -63,6 +61,62 @@ function CheckoutPage() {
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [formError, setFormError] = useState<string>();
   const [paying, setPaying] = useState(false);
+  const [returnState, setReturnState] = useState<"success" | "canceled" | null>(null);
+  const [syncError, setSyncError] = useState<string>();
+  const [syncingReturn, setSyncingReturn] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const search = new URLSearchParams(window.location.search);
+
+    if (search.get("success") === "1") {
+      setReturnState("success");
+      const sessionId = search.get("session_id");
+      if (!sessionId) {
+        return;
+      }
+
+      let cancelled = false;
+      setSyncingReturn(true);
+      setSyncError(undefined);
+
+      void (async () => {
+        try {
+          const result = await syncStripeCheckoutSession(sessionId);
+          if (cancelled) return;
+
+          if (result.orderStatus !== "paid") {
+            setSyncError("Payment is still processing. Your order will update shortly.");
+          }
+
+          await refreshCart();
+        } catch (error) {
+          if (!cancelled) {
+            setSyncError(
+              error instanceof Error
+                ? error.message
+                : "Could not confirm payment. Please check your orders.",
+            );
+          }
+        } finally {
+          if (!cancelled) {
+            setSyncingReturn(false);
+          }
+        }
+      })();
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (search.get("canceled") === "1") {
+      setReturnState("canceled");
+    }
+  }, [refreshCart]);
 
   const update = (key: FieldKey) => (event: React.ChangeEvent<HTMLInputElement>) =>
     setValues((prev) => ({ ...prev, [key]: event.target.value }));
@@ -80,16 +134,40 @@ function CheckoutPage() {
 
     setPaying(true);
     try {
-      const result = await createOrder(values);
-      await clearCart();
-      toast.success(`Order ${result.order.id} created - your pair is reserved.`);
-      navigate({ to: "/" });
+      const session = await createStripeCheckoutSession(values);
+      window.location.assign(session.url);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Could not create order.");
     } finally {
       setPaying(false);
     }
   };
+
+  if (returnState === "success") {
+    return (
+      <SiteLayout>
+        <div className="mx-auto max-w-xl px-5 py-32 text-center">
+          <h1 className="display text-5xl">PAYMENT COMPLETE</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {syncingReturn
+              ? "Confirming your payment..."
+              : "Your Stripe payment was confirmed and your order is being processed."}
+          </p>
+          {syncError ? (
+            <p
+              role="alert"
+              className="mt-4 rounded-sm border border-live/40 bg-live/5 px-3 py-2 text-xs font-medium text-live"
+            >
+              {syncError}
+            </p>
+          ) : null}
+          <Button size="lg" className="mt-8" asChild>
+            <Link to="/">Back to home</Link>
+          </Button>
+        </div>
+      </SiteLayout>
+    );
+  }
 
   if (lines.length === 0) {
     return (
@@ -157,8 +235,16 @@ function CheckoutPage() {
                 {formError}
               </p>
             ) : null}
+            {returnState === "canceled" ? (
+              <p
+                role="alert"
+                className="rounded-sm border border-live/40 bg-live/5 px-3 py-2 text-xs font-medium text-live"
+              >
+                Payment was canceled before completion. Your cart is still saved.
+              </p>
+            ) : null}
             <p className="text-xs text-muted-foreground">
-              This creates your Haven order. Payment will be added in a later phase.
+              You will be redirected to Stripe Checkout to complete payment securely.
             </p>
           </form>
 
