@@ -1,7 +1,7 @@
 import type { CartLine } from "@/lib/types";
+import { API_BASE_URL } from "@/lib/config";
 
 const STORAGE_KEY = "haven.cart";
-const API_BASE_URL = "http://localhost:4000/api";
 
 export const SHIPPING_FLAT_RATE = 499;
 export const FREE_SHIPPING_THRESHOLD = 25000;

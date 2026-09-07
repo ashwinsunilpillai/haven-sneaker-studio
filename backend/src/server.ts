@@ -7,6 +7,7 @@ import { getAuctionState, syncAuctionLifecycle } from "./services/auction.servic
 import { initRedisAdapter } from "./lib/redis.js";
 
 const port = Number(process.env["PORT"] ?? 4000);
+const host = process.env["HOST"] ?? "0.0.0.0";
 const app = createApp();
 
 const httpServer = http.createServer(app);
@@ -59,6 +60,6 @@ io.on("connection", (socket) => {
   });
 });
 
-httpServer.listen(port, () => {
-  console.log(`Haven backend listening on http://localhost:${port}`);
+httpServer.listen(port, host, () => {
+  console.log(`Haven backend listening on http://${host}:${port}`);
 });

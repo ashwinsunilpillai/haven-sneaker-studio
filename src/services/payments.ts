@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "@/lib/config";
+
 export interface CheckoutInput {
   name: string;
   email: string;
@@ -8,8 +10,6 @@ export interface CheckoutInput {
   postalCode: string;
   country: string;
 }
-
-const API_BASE_URL = "http://localhost:4000/api";
 
 interface StripeCheckoutSessionResponse {
   checkoutSession: {

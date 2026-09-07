@@ -5,8 +5,10 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "types": ["node"],
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
+    "rootDir": "..",
+    "outDir": "dist",
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
     "paths": {
       "@/*": ["src/*"]
     }

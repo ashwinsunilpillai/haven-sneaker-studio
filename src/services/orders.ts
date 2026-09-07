@@ -1,6 +1,5 @@
 import type { CartSnapshot } from "@/services/cart";
-
-const API_BASE_URL = "http://localhost:4000/api";
+import { API_BASE_URL } from "@/lib/config";
 
 export interface CheckoutInput {
   name: string;

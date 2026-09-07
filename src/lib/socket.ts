@@ -1,6 +1,5 @@
 import { io } from "socket.io-client";
-
-const SOCKET_URL = "http://localhost:4000";
+import { SOCKET_URL } from "@/lib/config";
 
 export const socket = io(SOCKET_URL, {
   withCredentials: true,
