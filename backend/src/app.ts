@@ -8,6 +8,7 @@ import { paymentRouter } from "./routes/payment.routes.js";
 import { orderRouter } from "./routes/order.routes.js";
 import { productRouter } from "./routes/product.routes.js";
 import { auctionRouter } from "./routes/auction.routes.js";
+import { uploadRouter } from "./routes/upload.routes.js";
 import { stripeWebhookHandler } from "./controllers/stripe.controller.js";
 
 export function createApp() {
@@ -33,6 +34,7 @@ export function createApp() {
   app.use("/api/orders", orderRouter);
   app.use("/api/payments", paymentRouter);
   app.use("/api/products", productRouter);
+  app.use("/api/uploads", uploadRouter);
   app.use("/api/auctions", auctionRouter);
 
   app.use((_req, res) => {

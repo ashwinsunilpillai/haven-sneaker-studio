@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { prisma } from "../lib/prisma.js";
 import { calculateShippingInPaise } from "../lib/money.js";
 import { clearCart } from "./cart.service.js";
+import { sendOrderConfirmationEmail } from "./email.service.js";
 import { createOrderSchema, OrderServiceError } from "./order.service.js";
 import { getStripeClient, getStripeWebhookSecret } from "../lib/stripe.js";
 
@@ -267,6 +268,10 @@ async function finalizePaidCheckoutSession(session: Stripe.Checkout.Session) {
   if (order.userId) {
     await clearCart(order.userId);
   }
+
+  void sendOrderConfirmationEmail(orderId).catch((error) => {
+    console.error(`Failed to send order confirmation email for ${orderId}:`, error);
+  });
 }
 
 async function cancelExpiredCheckoutSession(session: Stripe.Checkout.Session) {
