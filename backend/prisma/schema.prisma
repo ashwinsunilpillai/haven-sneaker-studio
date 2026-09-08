@@ -160,6 +160,7 @@ model Auction {
   reservePriceInPaise  Int?
   startsAt             DateTime      @default(now())
   endsAt               DateTime
+  auctionWonEmailSentAt DateTime?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 

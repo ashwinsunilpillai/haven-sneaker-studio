@@ -115,3 +115,86 @@ export async function sendOrderConfirmationEmail(orderId: string) {
     html,
   });
 }
+
+export async function sendLoginNotificationEmail(user: { name: string; email: string }) {
+  if (!isMailerConfigured()) {
+    console.warn(`Mailer not configured; skipping login notification email for ${user.email}.`);
+    return;
+  }
+
+  const mailer = getMailer();
+  if (!mailer) return;
+
+  const timestamp = new Date().toISOString();
+  const text = [
+    `Hi ${user.name},`,
+    "",
+    "This is a notification that your Haven account was just used to log in.",
+    `Account: ${user.email}`,
+    `Time: ${timestamp}`,
+    "",
+    "If this was not you, please secure your account by changing your password.",
+  ].join("\n");
+
+  await mailer.sendMail({
+    from: getMailFromAddress(),
+    to: user.email,
+    subject: "Haven login notification",
+    text,
+  });
+}
+
+export async function sendAuctionWonEmail(auctionId: string) {
+  if (!isMailerConfigured()) {
+    console.warn(`Mailer not configured; skipping auction won email for ${auctionId}.`);
+    return;
+  }
+
+  const mailer = getMailer();
+  if (!mailer) return;
+
+  const claimed = await prisma.auction.updateMany({
+    where: { id: auctionId, status: "ended", auctionWonEmailSentAt: null },
+    data: { auctionWonEmailSentAt: new Date() },
+  });
+
+  if (claimed.count === 0) return;
+
+  const auction = await prisma.auction.findUnique({
+    where: { id: auctionId },
+    include: {
+      product: true,
+      bids: {
+        orderBy: { amountInPaise: "desc" },
+        take: 1,
+        include: { user: true },
+      },
+    },
+  });
+
+  const winningBid = auction?.bids[0];
+  if (!auction || !winningBid?.user?.email) {
+    console.warn(`No email recipient for auction ${auctionId}; skipping auction won email.`);
+    return;
+  }
+
+  const winnerName = winningBid.user.name;
+  const winningAmount = formatInr(winningBid.amountInPaise);
+  const text = [
+    `Hi ${winnerName},`,
+    "",
+    `Congratulations, you won the Haven auction for ${auction.product.brand} ${auction.product.name}.`,
+    "",
+    `Winning bid: ${winningAmount}`,
+    `Auction ID: ${auction.id}`,
+    "",
+    "We will contact you with the next steps for completing your purchase.",
+  ].join("\n");
+
+  await mailer.sendMail({
+    from: getMailFromAddress(),
+    to: winningBid.user.email,
+    subject: `You won the Haven auction — ${auction.product.name}`,
+    text,
+  });
+}

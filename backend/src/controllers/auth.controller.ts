@@ -9,6 +9,7 @@ import {
   signupSchema,
 } from "../services/auth.service.js";
 import { getAuthCookieName, getAuthCookieOptions, signAuthToken } from "../lib/auth.js";
+import { sendLoginNotificationEmail } from "../services/email.service.js";
 
 export async function signupHandler(req: Request, res: Response) {
   try {
@@ -27,6 +28,9 @@ export async function loginHandler(req: Request, res: Response) {
     const user = await login(input);
     setAuthCookie(res, user.id);
     res.json({ user });
+    void sendLoginNotificationEmail(user).catch((error) => {
+      console.error(`Failed to send login notification email for ${user.id}:`, error);
+    });
   } catch (error) {
     sendAuthError(res, error);
   }

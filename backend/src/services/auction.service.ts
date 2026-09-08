@@ -1,5 +1,6 @@
 import type { Auction, AuctionStatus, Bid, Product } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
+import { sendAuctionWonEmail } from "./email.service.js";
 import {
   emitAuctionLifecycle,
   emitAuctionState,
@@ -188,6 +189,9 @@ export async function syncAuctionLifecycle() {
       if (payload) {
         emitAuctionLifecycle(payload, `auction:${a.id}`);
         emitAuctionState(payload, `auction:${a.id}`);
+        void sendAuctionWonEmail(a.id).catch((error) => {
+          console.error(`Failed to send auction won email for ${a.id}:`, error);
+        });
       }
     }
   }
