@@ -1,6 +1,7 @@
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import express from "express";
+import helmet from "helmet";
 import { authRouter } from "./routes/auth.routes.js";
 import { cartRouter } from "./routes/cart.routes.js";
 import { healthRouter } from "./routes/health.routes.js";
@@ -13,10 +14,14 @@ import { stripeWebhookHandler } from "./controllers/stripe.controller.js";
 
 export function createApp() {
   const app = express();
+  const frontendOrigin = (
+    process.env["FRONTEND_ORIGIN"]?.trim() || "http://localhost:8080"
+  ).replace(/\/$/, "");
 
+  app.use(helmet());
   app.use(
     cors({
-      origin: process.env["FRONTEND_ORIGIN"] ?? "http://localhost:8080",
+      origin: frontendOrigin,
       credentials: true,
     }),
   );
@@ -26,7 +31,7 @@ export function createApp() {
     express.raw({ type: "application/json" }),
     stripeWebhookHandler,
   );
-  app.use(express.json());
+  app.use(express.json({ limit: "1mb" }));
 
   app.use("/api/health", healthRouter);
   app.use("/api/auth", authRouter);

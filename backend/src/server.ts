@@ -8,13 +8,17 @@ import { initRedisAdapter } from "./lib/redis.js";
 
 const port = Number(process.env["PORT"] ?? 4000);
 const host = process.env["HOST"] ?? "0.0.0.0";
+const frontendOrigin = (process.env["FRONTEND_ORIGIN"]?.trim() || "http://localhost:8080").replace(
+  /\/$/,
+  "",
+);
 const app = createApp();
 
 const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env["FRONTEND_ORIGIN"],
+    origin: frontendOrigin,
     credentials: true,
   },
 });
