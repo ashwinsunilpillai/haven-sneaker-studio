@@ -15,6 +15,7 @@ export interface AuctionSocketStatePayload {
   productId: string;
   currentBid: number;
   bidCount: number;
+  currentBidSize?: number;
   auctionStatus: "scheduled" | "live" | "ended" | "cancelled";
   auctionStartsAt: string;
   auctionEndsAt: string;

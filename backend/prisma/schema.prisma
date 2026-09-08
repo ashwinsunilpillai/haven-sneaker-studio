@@ -176,6 +176,7 @@ model Bid {
   auctionId     String
   userId        String?
   amountInPaise Int
+  size          Decimal? @db.Decimal(4, 1)
   createdAt     DateTime @default(now())
 
   auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)

@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Countdown } from "@/components/Countdown";
+import { SizeSelector } from "@/components/SizeSelector";
 import { formatINR } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { minimumNextBid, placeBid } from "@/services/auctions";
@@ -26,13 +27,17 @@ interface BidPanelProps {
 export function BidPanel({ product, currentBid, open, onOpenChange, onBidPlaced }: BidPanelProps) {
   const minimum = minimumNextBid(currentBid);
   const [amount, setAmount] = useState(String(minimum));
+  const [size, setSize] = useState<number | null>(null);
   const [error, setError] = useState<string>();
+  const [success, setSuccess] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
       setAmount(String(minimum));
+      setSize(null);
       setError(undefined);
+      setSuccess(undefined);
     }
   }, [open, minimum]);
 
@@ -41,16 +46,21 @@ export function BidPanel({ product, currentBid, open, onOpenChange, onBidPlaced 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     const value = Number(amount);
+    if (size === null) {
+      setError("Please select a size first.");
+      return;
+    }
     if (!Number.isFinite(value) || value < minimum) {
       setError(`Minimum bid is ${formatINR(minimum)}.`);
       return;
     }
     setSubmitting(true);
     setError(undefined);
+    setSuccess(undefined);
     try {
-      const result = await placeBid(product.auctionId ?? product.id, value);
+      const result = await placeBid(product.auctionId ?? product.id, value, size);
       onBidPlaced(product.id, result.currentBid, result.bidCount);
-      onOpenChange(false);
+      setSuccess("Bid placed successfully. Bids cannot be cancelled once placed.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not place bid.");
     } finally {
@@ -82,6 +92,7 @@ export function BidPanel({ product, currentBid, open, onOpenChange, onBidPlaced 
         </dl>
 
         <form onSubmit={submit} className="space-y-4">
+          <SizeSelector sizes={product.sizes} value={size} onChange={setSize} />
           <Input
             label="Your bid (INR)"
             type="number"
@@ -96,6 +107,11 @@ export function BidPanel({ product, currentBid, open, onOpenChange, onBidPlaced 
           <Button type="submit" variant="live" size="lg" block loading={submitting}>
             Confirm bid
           </Button>
+          {success ? (
+            <p className="rounded-sm border border-emerald-500/40 bg-emerald-500/5 px-3 py-2 text-xs font-medium text-emerald-700">
+              {success}
+            </p>
+          ) : null}
         </form>
       </DialogContent>
     </Dialog>

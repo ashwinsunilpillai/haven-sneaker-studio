@@ -7,6 +7,7 @@ export interface AuctionRealtimeState {
   productId: string;
   currentBid: number;
   bidCount: number;
+  currentBidSize?: number;
   auctionStatus: Product["auctionStatus"];
   auctionStartsAt: string;
   auctionEndsAt: string;
@@ -18,6 +19,7 @@ export interface PlaceBidResult {
   productId: string;
   currentBid: number;
   bidCount: number;
+  currentBidSize?: number;
   status?: string;
 }
 
@@ -69,10 +71,14 @@ export function minimumNextBid(currentBid: number): number {
   return currentBid + increment;
 }
 
-export async function placeBid(auctionId: string, amount: number): Promise<PlaceBidResult> {
+export async function placeBid(
+  auctionId: string,
+  amount: number,
+  size: number,
+): Promise<PlaceBidResult> {
   return request<PlaceBidResult>(`/auctions/${encodeURIComponent(auctionId)}/bids`, {
     method: "POST",
-    body: JSON.stringify({ amount }),
+    body: JSON.stringify({ amount, size }),
   });
 }
 

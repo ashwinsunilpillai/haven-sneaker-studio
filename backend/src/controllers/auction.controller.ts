@@ -20,14 +20,20 @@ export async function placeBidHandler(req: Request, res: Response) {
   }
 
   const amount = Number(req.body?.amount);
+  const size = Number(req.body?.size);
 
   if (!Number.isFinite(amount) || amount <= 0) {
     res.status(400).json({ error: "Valid bid amount is required." });
     return;
   }
 
+  if (!Number.isFinite(size) || size <= 0) {
+    res.status(400).json({ error: "Valid sneaker size is required." });
+    return;
+  }
+
   try {
-    const result = await placeAuctionBid({ auctionId, userId: req.auth.userId, amount });
+    const result = await placeAuctionBid({ auctionId, userId: req.auth.userId, amount, size });
     res.json(result);
   } catch (error) {
     if (error instanceof Error) {

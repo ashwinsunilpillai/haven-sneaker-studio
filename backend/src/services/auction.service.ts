@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import type { Auction, AuctionStatus, Bid, Product } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { sendAuctionWonEmail } from "./email.service.js";
@@ -13,6 +14,7 @@ interface PlaceAuctionBidInput {
   auctionId: string;
   userId: string;
   amount: number;
+  size: number;
 }
 
 interface AuctionSummary {
@@ -20,14 +22,19 @@ interface AuctionSummary {
   productId: string;
   currentBid: number;
   bidCount: number;
+  currentBidSize?: number;
   auctionStatus: AuctionStatus;
   auctionStartsAt: string;
   auctionEndsAt: string;
   updatedAt: string;
 }
 
+type ProductWithSizes = Product & {
+  sizes: { value: Prisma.Decimal }[];
+};
+
 const auctionInclude = {
-  product: true,
+  product: { include: { sizes: true } },
   bids: {
     orderBy: { amountInPaise: "desc" as const },
     take: 1,
@@ -85,7 +92,10 @@ export async function placeAuctionBid(input: PlaceAuctionBidInput) {
   return prisma.$transaction(async (tx) => {
     const auction = await tx.auction.findUnique({
       where: { id: input.auctionId },
-      include: { bids: { orderBy: { amountInPaise: "desc" }, take: 1 } },
+      include: {
+        product: { include: { sizes: true } },
+        bids: { orderBy: { amountInPaise: "desc" }, take: 1 },
+      },
     });
 
     if (!auction) {
@@ -106,6 +116,13 @@ export async function placeAuctionBid(input: PlaceAuctionBidInput) {
       throw new Error("Auction has already ended");
     }
 
+    const availableSize = auction.product.sizes.some(
+      (productSize) => Number(productSize.value) === input.size,
+    );
+    if (!availableSize) {
+      throw new Error("Selected size is not available for this auction.");
+    }
+
     const highestBid = auction.bids[0]?.amountInPaise ?? auction.startingBidInPaise;
 
     if (amountInPaise <= highestBid) {
@@ -117,6 +134,7 @@ export async function placeAuctionBid(input: PlaceAuctionBidInput) {
         auctionId: auction.id,
         userId: input.userId,
         amountInPaise,
+        size: new Prisma.Decimal(input.size),
       },
     });
 
@@ -142,6 +160,7 @@ export async function placeAuctionBid(input: PlaceAuctionBidInput) {
       productId: auction.productId,
       currentBid: payload.currentBid,
       bidCount: payload.bidCount,
+      ...(payload.currentBidSize === undefined ? {} : { currentBidSize: payload.currentBidSize }),
       bidId: bid.id,
       status: payload.auctionStatus,
     };
@@ -223,7 +242,7 @@ async function buildLifecyclePayload(
 
 function serializeAuction(
   auction: Auction & {
-    product: Product;
+    product: ProductWithSizes;
     bids: Bid[];
     _count: { bids: number };
   },
@@ -240,12 +259,14 @@ function serializeAuction(
     priceInPaise: auction.product.priceInPaise,
     image: auction.product.image,
     gallery: auction.product.gallery,
-    sizes: [],
+    sizes: auction.product.sizes.map((size) => Number(size.value)),
     category: auction.product.category,
     isNew: auction.product.isNew,
     isAuction: true,
     currentBid: summary.currentBid,
     bidCount: summary.bidCount,
+    ...(summary.currentBidSize === undefined ? {} : { currentBidSize: summary.currentBidSize }),
+    currentBidSize: summary.currentBidSize,
     auctionEndsAt: summary.auctionEndsAt,
     auctionStatus: summary.auctionStatus,
     auctionId: auction.id,
@@ -265,6 +286,7 @@ function serializeAuctionState(
     productId: auction.productId,
     currentBid: highestBid / 100,
     bidCount: auction._count.bids,
+    ...(auction.bids[0]?.size == null ? {} : { currentBidSize: Number(auction.bids[0].size) }),
     auctionStatus: auction.status,
     auctionStartsAt: auction.startsAt.toISOString(),
     auctionEndsAt: auction.endsAt.toISOString(),
