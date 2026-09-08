@@ -68,6 +68,22 @@ interface StripeCheckoutSyncResponse {
   };
 }
 
+interface MockOrderResponse {
+  order: {
+    id: string;
+    status: string;
+    total: number;
+  };
+}
+
+interface MockPaymentResponse {
+  payment: {
+    orderId: string;
+    status: string;
+    alreadyProcessed: boolean;
+  };
+}
+
 export async function syncStripeCheckoutSession(sessionId: string) {
   const data = await request<StripeCheckoutSyncResponse>(
     `/payments/stripe/checkout-session/${encodeURIComponent(sessionId)}/sync`,
@@ -75,4 +91,22 @@ export async function syncStripeCheckoutSession(sessionId: string) {
   );
 
   return data.checkoutSession;
+}
+
+export async function createMockOrder(input: CheckoutInput) {
+  const data = await request<MockOrderResponse>("/payments/mock/order", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return data.order;
+}
+
+export async function confirmMockPayment(orderId: string) {
+  const data = await request<MockPaymentResponse>(
+    `/payments/mock/order/${encodeURIComponent(orderId)}/confirm`,
+    { method: "POST" },
+  );
+
+  return data.payment;
 }

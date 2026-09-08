@@ -48,6 +48,7 @@ export async function listOrdersForUser(userId: string) {
 export async function createOrderFromCart(
   userId: string,
   input: z.infer<typeof createOrderSchema>,
+  options: { clearCart?: boolean } = {},
 ) {
   const order = await prisma.$transaction(async (tx) => {
     const cart = await tx.cart.findFirst({
@@ -116,7 +117,9 @@ export async function createOrderFromCart(
       include: orderInclude,
     });
 
-    await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+    if (options.clearCart ?? true) {
+      await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+    }
 
     return createdOrder;
   });

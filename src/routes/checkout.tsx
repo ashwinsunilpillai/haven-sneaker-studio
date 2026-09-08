@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { SiteLayout } from "@/components/SiteLayout";
 import { Button } from "@/components/ui/haven-button";
 import { Input } from "@/components/ui/text-field";
 import { useCart } from "@/context/CartContext";
 import { formatINR } from "@/lib/format";
-import { createStripeCheckoutSession, syncStripeCheckoutSession } from "@/services/payments";
+import { confirmMockPayment, createMockOrder } from "@/services/payments";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -61,62 +61,7 @@ function CheckoutPage() {
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [formError, setFormError] = useState<string>();
   const [paying, setPaying] = useState(false);
-  const [returnState, setReturnState] = useState<"success" | "canceled" | null>(null);
-  const [syncError, setSyncError] = useState<string>();
-  const [syncingReturn, setSyncingReturn] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const search = new URLSearchParams(window.location.search);
-
-    if (search.get("success") === "1") {
-      setReturnState("success");
-      const sessionId = search.get("session_id");
-      if (!sessionId) {
-        return;
-      }
-
-      let cancelled = false;
-      setSyncingReturn(true);
-      setSyncError(undefined);
-
-      void (async () => {
-        try {
-          const result = await syncStripeCheckoutSession(sessionId);
-          if (cancelled) return;
-
-          if (result.orderStatus !== "paid") {
-            setSyncError("Payment is still processing. Your order will update shortly.");
-          }
-
-          await refreshCart();
-        } catch (error) {
-          if (!cancelled) {
-            setSyncError(
-              error instanceof Error
-                ? error.message
-                : "Could not confirm payment. Please check your orders.",
-            );
-          }
-        } finally {
-          if (!cancelled) {
-            setSyncingReturn(false);
-          }
-        }
-      })();
-
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    if (search.get("canceled") === "1") {
-      setReturnState("canceled");
-    }
-  }, [refreshCart]);
+  const [completedOrderId, setCompletedOrderId] = useState<string>();
 
   const update = (key: FieldKey) => (event: React.ChangeEvent<HTMLInputElement>) =>
     setValues((prev) => ({ ...prev, [key]: event.target.value }));
@@ -133,9 +78,12 @@ function CheckoutPage() {
     if (Object.keys(next).length) return;
 
     setPaying(true);
+    setFormError(undefined);
     try {
-      const session = await createStripeCheckoutSession(values);
-      window.location.assign(session.url);
+      const order = await createMockOrder(values);
+      const payment = await confirmMockPayment(order.id);
+      await refreshCart();
+      setCompletedOrderId(payment.orderId);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Could not create order.");
     } finally {
@@ -143,24 +91,15 @@ function CheckoutPage() {
     }
   };
 
-  if (returnState === "success") {
+  if (completedOrderId) {
     return (
       <SiteLayout>
         <div className="mx-auto max-w-xl px-5 py-32 text-center">
-          <h1 className="display text-5xl">PAYMENT COMPLETE</h1>
+          <h1 className="display text-5xl">DEMO PAYMENT COMPLETE</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            {syncingReturn
-              ? "Confirming your payment..."
-              : "Your Stripe payment was confirmed and your order is being processed."}
+            Your mock payment was confirmed and your order is being processed.
           </p>
-          {syncError ? (
-            <p
-              role="alert"
-              className="mt-4 rounded-sm border border-live/40 bg-live/5 px-3 py-2 text-xs font-medium text-live"
-            >
-              {syncError}
-            </p>
-          ) : null}
+          <p className="mt-4 text-xs text-muted-foreground">Order ID: {completedOrderId}</p>
           <Button size="lg" className="mt-8" asChild>
             <Link to="/">Back to home</Link>
           </Button>
@@ -225,7 +164,7 @@ function CheckoutPage() {
             </section>
 
             <Button type="submit" size="lg" block loading={paying}>
-              Pay {formatINR(total)}
+              Complete demo payment - {formatINR(total)}
             </Button>
             {formError ? (
               <p
@@ -235,16 +174,8 @@ function CheckoutPage() {
                 {formError}
               </p>
             ) : null}
-            {returnState === "canceled" ? (
-              <p
-                role="alert"
-                className="rounded-sm border border-live/40 bg-live/5 px-3 py-2 text-xs font-medium text-live"
-              >
-                Payment was canceled before completion. Your cart is still saved.
-              </p>
-            ) : null}
             <p className="text-xs text-muted-foreground">
-              You will be redirected to Stripe Checkout to complete payment securely.
+              Demo mode: no card details are collected or processed.
             </p>
           </form>
 

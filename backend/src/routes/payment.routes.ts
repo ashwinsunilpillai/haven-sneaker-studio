@@ -3,6 +3,10 @@ import {
   createCheckoutSessionHandler,
   syncCheckoutSessionHandler,
 } from "../controllers/stripe.controller.js";
+import {
+  confirmMockPaymentHandler,
+  createMockOrderHandler,
+} from "../controllers/mock-payment.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 
 export const paymentRouter = Router();
@@ -13,3 +17,5 @@ paymentRouter.post(
   requireAuth,
   syncCheckoutSessionHandler,
 );
+paymentRouter.post("/mock/order", requireAuth, createMockOrderHandler);
+paymentRouter.post("/mock/order/:orderId/confirm", requireAuth, confirmMockPaymentHandler);
